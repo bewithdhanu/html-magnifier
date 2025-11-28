@@ -58,6 +58,21 @@ import Magnifier from '@bewithdhanu/html-magnifier';
 
 **Status:** ⏳ May take a few minutes to propagate after npm publish
 
+### Option 4: CDN (via npmjs)
+
+```html
+<!-- Specific version -->
+<script src="https://registry.npmjs.org/@bewithdhanu/html-magnifier/-/html-magnifier-1.0.0.tgz"></script>
+```
+
+**Note:** npmjs registry serves tarballs. For direct file access, use jsDelivr or unpkg instead.
+
+**Alternative - Direct from npm package:**
+```html
+<!-- After npm install, use from node_modules -->
+<script src="node_modules/@bewithdhanu/html-magnifier/magnifier.js"></script>
+```
+
 ### Option 3: Direct Download
 
 Download `magnifier.js` from the [releases page](https://github.com/bewithdhanu/html-magnifier/releases) and include it:
