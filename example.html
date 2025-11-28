@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTML Magnifier - Example</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 40px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    h1 {
+      color: #333;
+      text-align: center;
+    }
+    .info {
+      background: #f0f0f0;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 20px 0;
+    }
+    .content {
+      line-height: 1.8;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>HTML Magnifier Example</h1>
+    
+    <div class="info">
+      <strong>How to use:</strong> Click and drag (or touch and drag on mobile) to activate the magnifier.
+      The magnifier will appear in the top-left corner showing a 2x zoomed view of the content under your cursor.
+    </div>
+    
+    <div class="content">
+      <h2>Sample Content</h2>
+      <p>This is a simple example demonstrating the HTML Magnifier library.</p>
+      <p>Try dragging your mouse (or finger on mobile) across this page to see the magnifier in action!</p>
+      
+      <h3>Features:</h3>
+      <ul>
+        <li>Works with any HTML content</li>
+        <li>Supports dynamic canvas and SVG elements</li>
+        <li>Mouse and touch support</li>
+        <li>Non-intrusive - doesn't interfere with normal interactions</li>
+        <li>Resource efficient - only captures while dragging</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Include the magnifier library -->
+  <script src="magnifier.js"></script>
+  <script>
+    // Initialize the magnifier
+    const magnifier = new Magnifier({
+      size: 200,
+      zoom: 2,
+      position: { x: 20, y: 20 }
+    });
+  </script>
+</body>
+</html>
+
