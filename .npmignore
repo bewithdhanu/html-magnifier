@@ -1,0 +1,22 @@
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Only include essential files
+# magnifier.js, README.md, LICENSE, and example.html are included via package.json "files" field
+

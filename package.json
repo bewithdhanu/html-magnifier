@@ -1,8 +1,14 @@
 {
   "name": "html-magnifier",
   "version": "1.0.0",
-  "description": "A lightweight, self-contained JavaScript library that adds a magnifier tool to any web page",
+  "description": "A lightweight, self-contained JavaScript library that adds a magnifier tool to any web page. Works with static content, dynamic canvas, and SVG animations.",
   "main": "magnifier.js",
+  "files": [
+    "magnifier.js",
+    "README.md",
+    "LICENSE",
+    "example.html"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -15,9 +21,13 @@
     "svg",
     "ui",
     "tool",
-    "utility"
+    "utility",
+    "browser",
+    "dom",
+    "magnification",
+    "lens"
   ],
-  "author": "",
+  "author": "bewithdhanu",
   "license": "MIT",
   "repository": {
     "type": "git",
