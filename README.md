@@ -58,20 +58,27 @@ import Magnifier from '@bewithdhanu/html-magnifier';
 
 **Status:** ⏳ May take a few minutes to propagate after npm publish
 
-### Option 4: CDN (via npmjs)
+### Option 4: Direct from npm Package
 
-```html
-<!-- Specific version -->
-<script src="https://registry.npmjs.org/@bewithdhanu/html-magnifier/-/html-magnifier-1.0.0.tgz"></script>
+After installing via npm:
+
+```bash
+npm install @bewithdhanu/html-magnifier
 ```
 
-**Note:** npmjs registry serves tarballs. For direct file access, use jsDelivr or unpkg instead.
+Then include it in your HTML:
 
-**Alternative - Direct from npm package:**
 ```html
-<!-- After npm install, use from node_modules -->
 <script src="node_modules/@bewithdhanu/html-magnifier/magnifier.js"></script>
 ```
+
+Or use a bundler (webpack, vite, etc.):
+
+```javascript
+import Magnifier from '@bewithdhanu/html-magnifier';
+```
+
+**Note:** The npm registry (npmjs.com) is not a CDN - it's the package registry. CDNs like jsDelivr and unpkg automatically pull packages from npm and serve them as CDN.
 
 ### Option 3: Direct Download
 
