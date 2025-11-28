@@ -1,5 +1,5 @@
 {
-  "name": "html-magnifier",
+  "name": "@bewithdhanu/html-magnifier",
   "version": "1.0.0",
   "description": "A lightweight, self-contained JavaScript library that adds a magnifier tool to any web page. Works with static content, dynamic canvas, and SVG animations.",
   "main": "magnifier.js",
@@ -31,11 +31,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/bewithdhanu/html-magnifier.git"
+    "url": "git+https://github.com/bewithdhanu/html-magnifier.git"
   },
   "bugs": {
     "url": "https://github.com/bewithdhanu/html-magnifier/issues"
   },
   "homepage": "https://github.com/bewithdhanu/html-magnifier#readme"
 }
-

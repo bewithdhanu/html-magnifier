@@ -17,25 +17,31 @@ A lightweight, self-contained JavaScript library that adds a magnifier tool to a
 ### Option 1: npm
 
 ```bash
-npm install html-magnifier
+npm install @bewithdhanu/html-magnifier
 ```
 
 Then include it in your HTML:
 
 ```html
-<script src="node_modules/html-magnifier/magnifier.js"></script>
+<script src="node_modules/@bewithdhanu/html-magnifier/magnifier.js"></script>
 ```
 
 Or use a bundler (webpack, vite, etc.):
 
 ```javascript
-import Magnifier from 'html-magnifier';
+import Magnifier from '@bewithdhanu/html-magnifier';
 ```
 
 ### Option 2: CDN (via jsDelivr)
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/html-magnifier@1.0.0/magnifier.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@bewithdhanu/html-magnifier@1.0.0/magnifier.js"></script>
+```
+
+### Option 3: CDN (via unpkg)
+
+```html
+<script src="https://unpkg.com/@bewithdhanu/html-magnifier@1.0.0/magnifier.js"></script>
 ```
 
 ### Option 3: Direct Download
