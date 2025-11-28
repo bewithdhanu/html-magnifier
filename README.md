@@ -32,7 +32,7 @@ Or use a bundler (webpack, vite, etc.):
 import Magnifier from '@bewithdhanu/html-magnifier';
 ```
 
-### Option 2: CDN (via jsDelivr) ✅
+### Option 2: CDN (via jsDelivr) ✅ **Recommended - Works Immediately**
 
 ```html
 <!-- Specific version -->
@@ -42,9 +42,11 @@ import Magnifier from '@bewithdhanu/html-magnifier';
 <script src="https://cdn.jsdelivr.net/npm/@bewithdhanu/html-magnifier/magnifier.js"></script>
 ```
 
+**Status:** ✅ Working - This is the fastest CDN to update after npm publish
+
 ### Option 3: CDN (via unpkg)
 
-**Note:** unpkg may take a few minutes to index new packages. If it doesn't work immediately, use jsDelivr instead.
+**Note:** unpkg may take 5-15 minutes to index new packages. If it doesn't work immediately, use jsDelivr instead.
 
 ```html
 <!-- Specific version -->
@@ -53,6 +55,8 @@ import Magnifier from '@bewithdhanu/html-magnifier';
 <!-- Latest version -->
 <script src="https://unpkg.com/@bewithdhanu/html-magnifier/magnifier.js"></script>
 ```
+
+**Status:** ⏳ May take a few minutes to propagate after npm publish
 
 ### Option 3: Direct Download
 
