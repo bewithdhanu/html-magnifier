@@ -32,16 +32,26 @@ Or use a bundler (webpack, vite, etc.):
 import Magnifier from '@bewithdhanu/html-magnifier';
 ```
 
-### Option 2: CDN (via jsDelivr)
+### Option 2: CDN (via jsDelivr) ✅
 
 ```html
+<!-- Specific version -->
 <script src="https://cdn.jsdelivr.net/npm/@bewithdhanu/html-magnifier@1.0.0/magnifier.js"></script>
+
+<!-- Latest version -->
+<script src="https://cdn.jsdelivr.net/npm/@bewithdhanu/html-magnifier/magnifier.js"></script>
 ```
 
 ### Option 3: CDN (via unpkg)
 
+**Note:** unpkg may take a few minutes to index new packages. If it doesn't work immediately, use jsDelivr instead.
+
 ```html
+<!-- Specific version -->
 <script src="https://unpkg.com/@bewithdhanu/html-magnifier@1.0.0/magnifier.js"></script>
+
+<!-- Latest version -->
+<script src="https://unpkg.com/@bewithdhanu/html-magnifier/magnifier.js"></script>
 ```
 
 ### Option 3: Direct Download
