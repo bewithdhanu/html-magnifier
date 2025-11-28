@@ -9,7 +9,8 @@
  *   const magnifier = new Magnifier({
  *     size: 200,
  *     zoom: 2,
- *     position: { x: 20, y: 20 }
+ *     position: { x: 20, y: 20 },
+ *     activationMode: 'drag'  // or 'move' - 'drag' shows only when dragging, 'move' shows when mouse moves
  *   });
  * 
  *   // To destroy:
@@ -21,6 +22,7 @@ class Magnifier {
     this.size = options.size || 200;
     this.zoom = options.zoom || 2;
     this.position = options.position || { x: 20, y: 20 };
+    this.activationMode = options.activationMode || 'drag'; // 'drag' or 'move'
     this.updateFrequency = options.updateFrequency || {
       MAIN_SNAPSHOT: 16,      // Main page snapshot interval (16ms ≈ 60fps)
       SVG_SNAPSHOT: 16,        // SVG snapshot interval (16ms ≈ 60fps)
@@ -52,6 +54,7 @@ class Magnifier {
     this.handleTouchStart = this.handleTouchStart.bind(this);
     this.handleTouchMove = this.handleTouchMove.bind(this);
     this.handleTouchEnd = this.handleTouchEnd.bind(this);
+    this.handleMouseLeave = this.handleMouseLeave.bind(this);
     this.handleResizeOrScroll = this.handleResizeOrScroll.bind(this);
     
     // Initialize (async - loads html2canvas internally)
@@ -85,7 +88,7 @@ class Magnifier {
       
       // Create and load script
       const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+      script.src = 'https://github.com/yorickshan/html2canvas-pro/releases/download/v1.5.13/html2canvas-pro.min.js';
       script.async = true;
       script.onload = () => {
         if (typeof html2canvas !== 'undefined') {
@@ -119,7 +122,7 @@ class Magnifier {
     // Add event listeners
     this.attachEventListeners();
     
-    // Take initial snapshot (but don't start periodic snapshots until dragging starts)
+    // Take initial snapshot
     if (document.readyState === 'complete') {
       this.takeSnapshot();
     } else {
@@ -129,7 +132,9 @@ class Magnifier {
         }, 100);
       });
     }
-    // Note: Periodic snapshots will start when user starts dragging
+    // Note: Periodic snapshots will start when:
+    // - In 'drag' mode: when user starts dragging
+    // - In 'move' mode: when mouse moves
   }
   
   createMagnifierElement() {
@@ -168,6 +173,78 @@ class Magnifier {
     document.body.appendChild(this.magnifierElement);
   }
   
+  // Convert oklab color to RGB
+  oklabToRgb(l, a, b, alpha = 1) {
+    // oklab to linear RGB conversion
+    const l_ = l + 0.3963377774 * a + 0.2158037573 * b;
+    const m_ = l - 0.1055613458 * a - 0.0638541728 * b;
+    const s_ = l - 0.0894841775 * a - 1.2914855480 * b;
+    
+    const l3 = l_ * l_ * l_;
+    const m3 = m_ * m_ * m_;
+    const s3 = s_ * s_ * s_;
+    
+    const r = +4.0767416621 * l3 - 3.3077115913 * m3 + 0.2309699292 * s3;
+    const g = -1.2684380046 * l3 + 2.6097574011 * m3 - 0.3413193965 * s3;
+    const bl = -0.0041960863 * l3 - 0.7034186147 * m3 + 1.7076147010 * s3;
+    
+    // Linear RGB to sRGB
+    const toSRGB = (c) => {
+      c = Math.max(0, Math.min(1, c));
+      return c <= 0.0031308 
+        ? 12.92 * c 
+        : 1.055 * Math.pow(c, 1.0 / 2.4) - 0.055;
+    };
+    
+    const r_srgb = Math.round(toSRGB(r) * 255);
+    const g_srgb = Math.round(toSRGB(g) * 255);
+    const b_srgb = Math.round(toSRGB(bl) * 255);
+    
+    if (alpha < 1) {
+      return `rgba(${r_srgb}, ${g_srgb}, ${b_srgb}, ${alpha})`;
+    }
+    return `rgb(${r_srgb}, ${g_srgb}, ${b_srgb})`;
+  }
+  
+  // Convert oklch color to RGB (via oklab)
+  oklchToRgb(l, c, h, alpha = 1) {
+    // Convert oklch to oklab
+    const a = c * Math.cos(h * Math.PI / 180);
+    const b = c * Math.sin(h * Math.PI / 180);
+    return this.oklabToRgb(l, a, b, alpha);
+  }
+  
+  // Replace oklab/oklch color functions with RGB
+  replaceColorFunction(match, colorType) {
+    try {
+      // Extract values from oklab(l a b) or oklch(l c h)
+      // Handle both space-separated and comma-separated values
+      const inner = match.replace(/okl(ab|ch)\(/i, '').replace(/\)$/, '').trim();
+      const parts = inner.split(/[\s,]+/)
+        .map(v => v.trim())
+        .filter(v => v.length > 0)
+        .map(v => parseFloat(v))
+        .filter(v => !isNaN(v));
+      
+      if (parts.length < 3) {
+        console.warn('Invalid oklab/oklch color:', match);
+        return 'rgb(128, 128, 128)'; // Fallback
+      }
+      
+      const alpha = parts.length > 3 ? parts[3] : 1;
+      
+      if (colorType === 'oklab') {
+        return this.oklabToRgb(parts[0], parts[1], parts[2], alpha);
+      } else if (colorType === 'oklch') {
+        return this.oklchToRgb(parts[0], parts[1], parts[2], alpha);
+      }
+    } catch (err) {
+      console.warn('Error converting color:', match, err);
+    }
+    
+    return 'rgb(128, 128, 128)';
+  }
+  
   convertOklchColors(clonedDoc) {
     try {
       const styleSheets = Array.from(clonedDoc.styleSheets);
@@ -180,8 +257,16 @@ class Magnifier {
               for (let i = 0; i < style.length; i++) {
                 const prop = style[i];
                 const value = style.getPropertyValue(prop);
-                if (value && value.includes('oklch')) {
-                  style.removeProperty(prop);
+                if (value && (value.includes('oklch') || value.includes('oklab'))) {
+                  // Replace oklab/oklch with RGB
+                  let newValue = value;
+                  newValue = newValue.replace(/oklab\([^)]+\)/gi, (match) => 
+                    this.replaceColorFunction(match, 'oklab')
+                  );
+                  newValue = newValue.replace(/oklch\([^)]+\)/gi, (match) => 
+                    this.replaceColorFunction(match, 'oklch')
+                  );
+                  style.setProperty(prop, newValue);
                 }
               }
             }
@@ -193,15 +278,27 @@ class Magnifier {
       
       const styleTags = clonedDoc.querySelectorAll('style');
       styleTags.forEach((styleTag) => {
-        if (styleTag.textContent && styleTag.textContent.includes('oklch')) {
-          styleTag.textContent = styleTag.textContent.replace(
-            /oklch\([^)]+\)/gi,
-            'rgb(128, 128, 128)'
-          );
+        if (styleTag.textContent && (styleTag.textContent.includes('oklch') || styleTag.textContent.includes('oklab'))) {
+          styleTag.textContent = styleTag.textContent
+            .replace(/oklab\([^)]+\)/gi, (match) => this.replaceColorFunction(match, 'oklab'))
+            .replace(/oklch\([^)]+\)/gi, (match) => this.replaceColorFunction(match, 'oklch'));
+        }
+      });
+      
+      // Handle inline styles on elements
+      const allElements = clonedDoc.querySelectorAll('*');
+      allElements.forEach((element) => {
+        if (element.style && element.style.cssText) {
+          const cssText = element.style.cssText;
+          if (cssText.includes('oklch') || cssText.includes('oklab')) {
+            element.style.cssText = cssText
+              .replace(/oklab\([^)]+\)/gi, (match) => this.replaceColorFunction(match, 'oklab'))
+              .replace(/oklch\([^)]+\)/gi, (match) => this.replaceColorFunction(match, 'oklch'));
+          }
         }
       });
     } catch (err) {
-      console.warn('Error converting oklch colors:', err);
+      console.warn('Error converting oklch/oklab colors:', err);
     }
   }
   
@@ -329,8 +426,11 @@ class Magnifier {
     // If over dynamic canvas, capture it directly (real-time)
     if (isOverDynamicCanvas && dynamicCanvas instanceof HTMLCanvasElement) {
       const rect = dynamicCanvas.getBoundingClientRect();
+      // Get cursor position relative to canvas element
       const elemX = this.lastMouseX - rect.left;
       const elemY = this.lastMouseY - rect.top;
+      
+      // Calculate source region centered on cursor (cursor at center of magnifier)
       const elemSourceX = Math.max(0, Math.min(elemX - sourceSize / 2, rect.width - sourceSize));
       const elemSourceY = Math.max(0, Math.min(elemY - sourceSize / 2, rect.height - sourceSize));
       
@@ -353,19 +453,28 @@ class Magnifier {
     // If over dynamic SVG, use cached SVG snapshot
     if (isOverDynamicSvg && this.svgSnapshotCanvas) {
       const rect = dynamicSvg.getBoundingClientRect();
+      // Get cursor position relative to SVG element
       const elemX = this.lastMouseX - rect.left;
       const elemY = this.lastMouseY - rect.top;
       
+      // Calculate scale between SVG element and snapshot
       const svgScale = this.svgSnapshotCanvas.width / rect.width;
-      const elemSourceX = Math.max(0, Math.min((elemX - sourceSize / 2) * svgScale, this.svgSnapshotCanvas.width - sourceSize * svgScale));
-      const elemSourceY = Math.max(0, Math.min((elemY - sourceSize / 2) * svgScale, this.svgSnapshotCanvas.height - sourceSize * svgScale));
+      
+      // Convert cursor position to snapshot coordinates
+      const snapX = elemX * svgScale;
+      const snapY = elemY * svgScale;
+      
+      // Calculate source region centered on cursor (cursor at center of magnifier)
+      const sourceSizeScaled = sourceSize * svgScale;
+      const elemSourceX = Math.max(0, Math.min(snapX - sourceSizeScaled / 2, this.svgSnapshotCanvas.width - sourceSizeScaled));
+      const elemSourceY = Math.max(0, Math.min(snapY - sourceSizeScaled / 2, this.svgSnapshotCanvas.height - sourceSizeScaled));
       
       this.ctx.save();
       this.ctx.imageSmoothingEnabled = false;
       try {
         this.ctx.drawImage(
           this.svgSnapshotCanvas,
-          elemSourceX, elemSourceY, sourceSize * svgScale, sourceSize * svgScale,
+          elemSourceX, elemSourceY, sourceSizeScaled, sourceSizeScaled,
           0, 0, this.size, this.size
         );
       } catch (err) {
@@ -389,25 +498,34 @@ class Magnifier {
     }
     
     // Map viewport coordinates to snapshot coordinates
-    const snapScaleX = this.snapshotCanvas.width / document.documentElement.scrollWidth || 1;
-    const snapScaleY = this.snapshotCanvas.height / document.documentElement.scrollHeight || 1;
-    const snapScale = (snapScaleX + snapScaleY) / 2;
+    // html2canvas captures at scale 1, so we need to map viewport to document coordinates
+    const docWidth = document.documentElement.scrollWidth;
+    const docHeight = document.documentElement.scrollHeight;
+    const snapScaleX = this.snapshotCanvas.width / docWidth || 1;
+    const snapScaleY = this.snapshotCanvas.height / docHeight || 1;
     
-    const worldX = window.scrollX + this.lastMouseX;
-    const worldY = window.scrollY + this.lastMouseY;
+    // Get the absolute document coordinates (including scroll)
+    const docX = window.scrollX + this.lastMouseX;
+    const docY = window.scrollY + this.lastMouseY;
     
+    // Convert document coordinates to snapshot coordinates
+    const snapX = docX * snapScaleX;
+    const snapY = docY * snapScaleY;
+    
+    // Calculate source region centered on cursor position
+    // The cursor should be at the exact center of the magnifier view
     const sx = Math.max(
       0,
       Math.min(
-        Math.round(worldX * snapScale - sourceSize / 2),
-        Math.max(0, this.snapshotCanvas.width - sourceSize)
+        snapX - sourceSize / 2,
+        this.snapshotCanvas.width - sourceSize
       )
     );
     const sy = Math.max(
       0,
       Math.min(
-        Math.round(worldY * snapScale - sourceSize / 2),
-        Math.max(0, this.snapshotCanvas.height - sourceSize)
+        snapY - sourceSize / 2,
+        this.snapshotCanvas.height - sourceSize
       )
     );
     
@@ -444,7 +562,11 @@ class Magnifier {
   
   updateMagnifierVisibility() {
     if (this.magnifierElement) {
-      if (this.isDragging) {
+      const shouldShow = this.activationMode === 'move' 
+        ? true  // Always show in move mode when mouse is moving
+        : this.isDragging;  // Only show when dragging in drag mode
+      
+      if (shouldShow) {
         this.magnifierElement.style.display = 'block';
       } else {
         this.magnifierElement.style.display = 'none';
@@ -453,9 +575,11 @@ class Magnifier {
   }
   
   updatePosition(x, y) {
-    if (!this.isDragging) return;
-    this.lastMouseX = x;
-    this.lastMouseY = y;
+    // In move mode, always update position; in drag mode, only when dragging
+    if (this.activationMode === 'move' || this.isDragging) {
+      this.lastMouseX = x;
+      this.lastMouseY = y;
+    }
   }
   
   handleMouseDown(e) {
@@ -468,7 +592,17 @@ class Magnifier {
   }
   
   handleMouseMove(e) {
-    if (this.isDragging) {
+    if (this.activationMode === 'move') {
+      // In move mode, always update position and show magnifier
+      this.updatePosition(e.clientX, e.clientY);
+      this.updateMagnifierVisibility();
+      // Start periodic snapshots if not already running
+      if (!this.snapshotInterval) {
+        this.startPeriodicSnapshot();
+        this.startSvgSnapshot();
+      }
+    } else if (this.isDragging) {
+      // In drag mode, only update when dragging
       this.updatePosition(e.clientX, e.clientY);
     }
   }
@@ -476,8 +610,21 @@ class Magnifier {
   handleMouseUp(e) {
     this.isDragging = false;
     this.updateMagnifierVisibility();
-    // Stop snapshots when dragging stops
-    this.stopPeriodicSnapshot();
+    // Stop snapshots when dragging stops (only in drag mode)
+    if (this.activationMode === 'drag') {
+      this.stopPeriodicSnapshot();
+    }
+  }
+  
+  handleMouseLeave(e) {
+    // Hide magnifier when mouse leaves window (only in move mode)
+    if (this.activationMode === 'move') {
+      if (this.magnifierElement) {
+        this.magnifierElement.style.display = 'none';
+      }
+      // Stop snapshots to save resources
+      this.stopPeriodicSnapshot();
+    }
   }
   
   handleTouchStart(e) {
@@ -516,8 +663,10 @@ class Magnifier {
   handleTouchEnd(e) {
     this.isDragging = false;
     this.updateMagnifierVisibility();
-    // Stop snapshots when dragging stops
-    this.stopPeriodicSnapshot();
+    // Stop snapshots when dragging stops (only in drag mode)
+    if (this.activationMode === 'drag') {
+      this.stopPeriodicSnapshot();
+    }
   }
   
   handleResizeOrScroll() {
@@ -533,6 +682,7 @@ class Magnifier {
     window.addEventListener('mousedown', this.handleMouseDown);
     window.addEventListener('mousemove', this.handleMouseMove);
     window.addEventListener('mouseup', this.handleMouseUp);
+    window.addEventListener('mouseleave', this.handleMouseLeave);
     // Use passive: true for touchstart/touchend to allow normal interactions
     // Only touchmove needs to be non-passive so we can preventDefault when dragging
     window.addEventListener('touchstart', this.handleTouchStart, { passive: true });
@@ -546,6 +696,7 @@ class Magnifier {
     window.removeEventListener('mousedown', this.handleMouseDown);
     window.removeEventListener('mousemove', this.handleMouseMove);
     window.removeEventListener('mouseup', this.handleMouseUp);
+    window.removeEventListener('mouseleave', this.handleMouseLeave);
     window.removeEventListener('touchstart', this.handleTouchStart);
     window.removeEventListener('touchmove', this.handleTouchMove);
     window.removeEventListener('touchend', this.handleTouchEnd);

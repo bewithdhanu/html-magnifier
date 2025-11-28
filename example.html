@@ -33,6 +33,25 @@
       line-height: 1.8;
       color: #333;
     }
+    /* Testing oklab colors in CSS */
+    .oklab-test {
+      background: oklab(0.7 0.1 0.1);
+      color: oklab(0.9 0 0);
+      padding: 15px;
+      border-radius: 8px;
+      margin: 20px 0;
+      border: 2px solid oklab(0.5 0.2 0.1);
+    }
+    .oklab-gradient {
+      background: linear-gradient(135deg, oklab(0.6 0.15 0.1), oklab(0.8 0.1 0.2));
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+      color: oklab(0.95 0 0);
+    }
+    .oklab-text {
+      color: oklab(0.4 0.2 -0.1);
+    }
   </style>
 </head>
 <body>
@@ -57,6 +76,33 @@
         <li>Non-intrusive - doesn't interfere with normal interactions</li>
         <li>Resource efficient - only captures while dragging</li>
       </ul>
+      
+      <h3>OKLab Color Testing</h3>
+      <p>The magnifier now supports modern CSS color functions like <code>oklab</code> and <code>oklch</code>.</p>
+      
+      <div class="oklab-test">
+        <strong>OKLab Background Box</strong>
+        <p>This box uses oklab colors in CSS styles. The background, text color, and border all use oklab color functions.</p>
+      </div>
+      
+      <div class="oklab-gradient">
+        <strong>OKLab Gradient Box</strong>
+        <p>This box uses a gradient with oklab colors. The magnifier should handle these colors correctly.</p>
+      </div>
+      
+      <div style="background: oklab(0.85 0.05 0.1); color: oklab(0.2 0.1 0.05); padding: 15px; border-radius: 8px; margin: 20px 0;">
+        <strong>OKLab Inline Style</strong>
+        <p>This box uses oklab colors via inline styles. Test the magnifier over this element to verify it works correctly.</p>
+      </div>
+      
+      <p class="oklab-text">
+        <strong>OKLab Text Color:</strong> This paragraph uses oklab for text color. The magnifier should capture this correctly.
+      </p>
+      
+      <div style="border: 3px solid oklab(0.5 0.15 -0.1); padding: 15px; margin: 20px 0; background: oklab(0.95 0.01 0.01);">
+        <strong>Mixed OKLab Styles</strong>
+        <p style="color: oklab(0.3 0.1 0.05);">This element uses multiple oklab colors: border, background, and text color.</p>
+      </div>
     </div>
   </div>
 
@@ -67,7 +113,8 @@
     const magnifier = new Magnifier({
       size: 200,
       zoom: 2,
-      position: { x: 20, y: 20 }
+      position: { x: 20, y: 20 },
+      activationMode: 'move'
     });
   </script>
 </body>
